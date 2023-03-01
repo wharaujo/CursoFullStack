@@ -1,4 +1,3 @@
-using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -6,7 +5,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using ProEventos.API.Data;
+using ProEventos.Application;
+using ProEventos.Persistence.Contexto;
+using ProEventos.Persistence.Contrato;
+using ProEventos.Persistence;
 
 namespace ProEventos.API
 {
@@ -22,11 +24,19 @@ namespace ProEventos.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<DataContext>(
+            services.AddDbContext<ProEventosContext>(
                 context => context.UseSqlServer(Configuration.GetConnectionString("Default"))
             );
 
-            services.AddControllers();
+            services.AddControllers()
+                    .AddNewtonsoftJson(x => x.SerializerSettings.ReferenceLoopHandling = 
+                        Newtonsoft.Json.ReferenceLoopHandling.Ignore
+                    );
+
+            services.AddScoped<IEventosServices, EventoService>();
+            services.AddScoped<IGeralPersist, GeralPersistence>();
+            services.AddScoped<IEventosPersist, EventosPersistence>();
+
             services.AddCors();
             services.AddSwaggerGen(c =>
             {
